@@ -59,14 +59,14 @@ CardSet.prototype.friendlyCardSet = function() {
     returns index of card
 */
 CardSet.prototype.findCard = function(rank, suit) {
-
+    return -1;
 };
 
 /*
     returns the card that was removed
 */
 CardSet.prototype.removeCard = function(rank, suit) {
-    var index;
+    var index, card;
 
     if (typeof rank === "undefined") {
         return this.cards.pop();
@@ -75,7 +75,7 @@ CardSet.prototype.removeCard = function(rank, suit) {
     index = this.findCard(rank, suit);
 
     if (index > -1) {
-        return this.deck[index];
+        return this.cards.splice(index, 1);
     }
 
     return false;
