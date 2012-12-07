@@ -8,35 +8,30 @@ Card.prototype.toString = function() {
     return this.rank + ' of ' + this.suit;
 };
 
-function Deck(type, jokerCount) {
+function CardSet(cards) {
+    this.cards = cards || [];
+}
+
+CardSet.prototype.generateDeck = function(type, jokerCount) {
     var ranks = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'],
         suits = ['Diamonds','Hearts','Spades','Clubs'];
 
-    this.cards = generateDeck(type, jokerCount);
-
-    /*
-        standard = 52 card deck + jokers
-    */
-    function generateDeck(type, jokerCount) {
-        var cards = [];
-
-        if (type === 'standard') {
-            for (var i = 0; i < ranks.length; i++) {
-                for (var j = 0; j < suits.length; j++) {
-                    cards.push(new Card(ranks[i], suits[j]));
-                }
-            }
-
-            for (var i = 0; i < jokerCount; i++) {
-                cards.push(new Card('Joker'));
+    if (type === 'standard') {
+        for (var i = 0; i < ranks.length; i++) {
+            for (var j = 0; j < suits.length; j++) {
+                this.cards.push(new Card(ranks[i], suits[j]));
             }
         }
 
-        return cards;
+        for (var k = 0; k < jokerCount; k++) {
+            this.cards.push(new Card('Joker'));
+        }
     }
-}
 
-Deck.prototype.shuffle = function() {
+    return this;
+};
+
+CardSet.prototype.shuffle = function() {
     var cardCount = this.cards.length,
         j, tmpCard;
 
@@ -46,9 +41,11 @@ Deck.prototype.shuffle = function() {
         this.cards[i] = this.cards[j];
         this.cards[j] = tmpCard;
     }
+
+    return this;
 };
 
-Deck.prototype.friendlyDeck = function() {
+CardSet.prototype.friendlyCardSet = function() {
     var cards = [];
 
     for (var i = 0; i < this.cards.length; i++) {
@@ -56,22 +53,37 @@ Deck.prototype.friendlyDeck = function() {
     }
 
     return cards;
-}
+};
 
-Deck.prototype.findCard(rank, suit) {
+/*
+    returns index of card
+*/
+CardSet.prototype.findCard = function(rank, suit) {
 
 };
 
-Deck.
+/*
+    returns the card that was removed
+*/
+CardSet.prototype.removeCard = function(rank, suit) {
+    var index;
 
-function Hand(cards) {
-    this.cards = cards;
-}
+    if (typeof rank === "undefined") {
+        return this.cards.pop();
+    }
 
-Hand.prototype = new Deck();
+    index = this.findCard(rank, suit);
+
+    if (index > -1) {
+        return this.deck[index];
+    }
+
+    return false;
+};
+
 
 function Player(cards) {
-    this.hand = new Hand(cards);
+    this.hand = new CardSet(cards);
 }
 
 
@@ -83,6 +95,6 @@ function DaifugoAI() {
     
 }
 
-var deck = new Deck('standard', 2);
-deck.shuffle();
-var friendly = deck.friendlyDeck();
+var cards = new CardSet();
+cards.generateDeck('standard', 2).shuffle();
+var friendly = cards.friendlyCardSet();
