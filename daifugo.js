@@ -59,6 +59,12 @@ CardSet.prototype.friendlyCardSet = function() {
     returns index of card
 */
 CardSet.prototype.findCard = function(rank, suit) {
+    for (var i = 0; i < this.cards.length; i++) {
+        if (this.cards[i].rank === rank && this.cards[i].suit === suit) {
+            return i;
+        }
+    }
+
     return -1;
 };
 
@@ -75,26 +81,67 @@ CardSet.prototype.removeCard = function(rank, suit) {
     index = this.findCard(rank, suit);
 
     if (index > -1) {
-        return this.cards.splice(index, 1);
+        return this.cards.splice(index, 1)[0];
     }
 
     return false;
 };
 
 
-function Player(cards) {
-    this.hand = new CardSet(cards);
+function Daifugo(numberOfPlayers, rules) {
+    this.players = [];
+
+    for (var i = 0; i < numberOfPlayers; i++) {
+        this.players.push(new DaifugoPlayer());
+    }
 }
 
+Daifugo.prototype.deal = function(start) {
+    var deck = new CardSet(),
+        playerCount = this.players.length,
+        index = start,
+        deckSize = 0,
+        card;
 
-function Daifugo() {
-    
+    deck.generateDeck('standard', 2).shuffle();
+    deckSize = deck.cards.length;
+
+    // give card to each player
+    for (var i = 0; i < deckSize; i++) {
+        card = deck.removeCard();
+        if (card) {
+            this.players[index].dealCard(card);
+            index++;
+
+            if (index === playerCount) {
+                index = 0;
+            }
+        } else {
+            throw "Something is wrong with the deck..."
+        }
+    }
+
+}
+
+function DaifugoPlayer(cards) {
+    this.hand = new CardSet(cards);
+    this.title = '';
+}
+
+DaifugoPlayer.prototype.dealCard = function(card) {
+    this.hand.cards.push(card);
 }
 
 function DaifugoAI() {
     
 }
 
+DaifugoAI.prototype = new DaifugoPlayer;
+
+var game = new Daifugo(3);
+game.deal(0);
+/*
 var cards = new CardSet();
 cards.generateDeck('standard', 2).shuffle();
 var friendly = cards.friendlyCardSet();
+*/
