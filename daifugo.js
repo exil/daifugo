@@ -117,11 +117,10 @@ Daifugo.prototype.deal = function(start) {
                 index = 0;
             }
         } else {
-            throw "Something is wrong with the deck..."
+            throw "Something is very wrong with the deck..."
         }
     }
-
-}
+};
 
 function DaifugoPlayer(cards) {
     this.hand = new CardSet(cards);
@@ -130,7 +129,7 @@ function DaifugoPlayer(cards) {
 
 DaifugoPlayer.prototype.dealCard = function(card) {
     this.hand.cards.push(card);
-}
+};
 
 function DaifugoAI() {
     
