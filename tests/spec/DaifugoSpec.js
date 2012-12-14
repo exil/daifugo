@@ -56,7 +56,35 @@ describe('CardSet', function() {
     });
 
     it('should find a card in a deck', function() {
+        cardSet1.generateDeck('standard', 0);
+        cardSet1.cards[27].rank = '7';
+        cardSet1.cards[27].suit = 'Tests';
 
+        var index = cardSet1.findCard('7', 'Tests');
+
+        expect(index).toBe(27);
+    });
+
+    it('should remove the top card from a deck if no parameters are specified', function() {
+        cardSet1.generateDeck('standard', 0);
+
+        var rank = cardSet1.cards[cardSet1.cards.length - 1].rank,
+            suit = cardSet1.cards[cardSet1.cards.length - 1].suit,
+            card = cardSet1.removeCard();
+
+        expect(card.rank).toBe(rank);
+        expect(card.suit).toBe(suit);
+    });
+
+    it('should remove a specified card from a deck', function() {
+        cardSet1.generateDeck('standard', 0);
+        cardSet1.cards[27].rank = '7';
+        cardSet1.cards[27].suit = 'Tests';
+
+        var card = cardSet1.removeCard('7', 'Tests');
+
+        expect(card.rank).toBe('7');
+        expect(card.suit).toBe('Tests');
     });
 
     // shuffles deck of cards 
