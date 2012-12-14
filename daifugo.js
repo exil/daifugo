@@ -35,8 +35,8 @@ CardSet.prototype.shuffle = function() {
     var cardCount = this.cards.length,
         j, tmpCard;
 
-    for (var i = 0; i < cardCount; i++) {
-        j = Math.floor(Math.random() * cardCount);
+    for (var i = cardCount - 1; i > 0; i--) {
+        j = Math.floor(Math.random() * i);
         tmpCard = this.cards[i];
         this.cards[i] = this.cards[j];
         this.cards[j] = tmpCard;
