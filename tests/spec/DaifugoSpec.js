@@ -131,3 +131,82 @@ describe('CardSet', function() {
         expect(average).toBeLessThan(5);
     });
 });
+
+describe('Daifugo Game', function() {
+    var game;
+
+    beforeEach(function() {
+        player1 = new DaifugoPlayer();
+        player2 = new DaifugoPlayer();
+        player3 = new DaifugoPlayer();
+    });
+
+    describe('initialization', function() {
+        it('should create 3 players when new object is created', function() {
+            game = new Daifugo(3);
+
+            expect(game.players.length).toBe(3);
+        });
+
+        it('should create a new deck with 2 jokers', function() {
+            game = new Daifugo(1);
+
+            expect(game.deck.cards.length).toBe(54);
+        });
+    });
+
+    describe('dealing deck', function() {
+        it('should not deal any cards if player index is greater than the number of players', function() {
+
+        });
+
+        it('should deal all cards to one player', function() {
+            game = new Daifugo(1);
+            game.deal(0);
+
+            expect(game.deck.cards.length).toBe(0);
+            expect(game.players[0].hand.cards.length).toBe(54);
+        });
+
+        it('should deal same number of cards to two players', function() {
+            game = new Daifugo(2);
+            game.deal(0);
+
+            expect(game.deck.cards.length).toBe(0);
+            expect(game.players[0].hand.cards.length).toBe(27);
+            expect(game.players[1].hand.cards.length).toBe(27);
+        });
+
+        it('should deal same number of cards to three players', function() {
+            game = new Daifugo(3);
+            game.deal(0);
+
+            expect(game.deck.cards.length).toBe(0);
+            expect(game.players[0].hand.cards.length).toBe(18);
+            expect(game.players[1].hand.cards.length).toBe(18);
+            expect(game.players[2].hand.cards.length).toBe(18);
+        });
+
+        it('should deal even as possible number of cards to four players', function() {
+            game = new Daifugo(4);
+            game.deal(0);
+
+            expect(game.deck.cards.length).toBe(0);
+            expect(game.players[0].hand.cards.length).toBe(14);
+            expect(game.players[1].hand.cards.length).toBe(14);
+            expect(game.players[2].hand.cards.length).toBe(13);
+            expect(game.players[3].hand.cards.length).toBe(13);
+        });
+    });
+
+    describe('dealing individual card', function() {
+        it('should not deal a card if deck is empty', function() {
+
+        });
+
+        it('should deal a card if player\'s hand is empty', function() {
+
+        });
+    })
+
+});

@@ -87,28 +87,32 @@ CardSet.prototype.removeCard = function(rank, suit) {
     return false;
 };
 
-
+// rules could include jokers, 8, 10, etc.
 function Daifugo(numberOfPlayers, rules) {
     this.players = [];
 
     for (var i = 0; i < numberOfPlayers; i++) {
         this.players.push(new DaifugoPlayer());
     }
+
+    this.deck = new CardSet();
+
+    this.deck.generateDeck('standard', 2).shuffle();
 }
 
-Daifugo.prototype.deal = function(start) {
-    var deck = new CardSet(),
-        playerCount = this.players.length,
-        index = start,
-        deckSize = 0,
-        card;
+Daifugo.prototype.start = function() {    
+    this.deal(deck, 0);
+};
 
-    deck.generateDeck('standard', 2).shuffle();
-    deckSize = deck.cards.length;
+Daifugo.prototype.deal = function(startingPlayer) {
+    var playerCount = this.players.length,
+        index = startingPlayer,
+        deckSize = this.deck.cards.length,
+        card;
 
     // give card to each player
     for (var i = 0; i < deckSize; i++) {
-        card = deck.removeCard();
+        card = this.deck.removeCard();
         if (card) {
             this.players[index].dealCard(card);
             index++;
