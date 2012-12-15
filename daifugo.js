@@ -24,7 +24,7 @@ CardSet.prototype.generateDeck = function(type, jokerCount) {
         }
 
         for (var k = 0; k < jokerCount; k++) {
-            this.cards.push(new Card('Joker'));
+            this.cards.push(new Card('Joker', 'Joker'));
         }
     }
 
@@ -87,6 +87,15 @@ CardSet.prototype.removeCard = function(rank, suit) {
     return false;
 };
 
+CardSet.prototype.sort = function(rankOrder, suitOrder) {
+    // sort by suit
+    this.cards.sort(function(a, b) {
+        return ( (suitOrder.indexOf(a.suit) + 1) * 100 + (rankOrder.indexOf(a.rank) + 1) ) - 
+            ( (suitOrder.indexOf(b.suit) + 1) * 100 + (rankOrder.indexOf(b.rank) + 1) );
+    });
+
+}
+
 // rules could include jokers, 8, 10, etc.
 function Daifugo(numberOfPlayers, rules) {
     this.players = [];
@@ -102,6 +111,7 @@ function Daifugo(numberOfPlayers, rules) {
 
     // center cards
     this.activeSet = new CardSet();
+    this.activeType = ''; // one, two, three, four, 3run, 4run, 5run, etc.
 }
 
 Daifugo.prototype.start = function() {    
@@ -137,10 +147,94 @@ Daifugo.prototype.deal = function(startingPlayer) {
     are a valid play
 */
 Daifugo.prototype.isValidPlay = function(cards) {
-    var playCards = new CardSet(cards);
+    var rankOrder = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2', 'Joker'],
+        suitOrder = ['Diamonds', 'Hearts', 'Spades', 'Clubs', 'Jokers'],
+        playCards = new CardSet(cards);
+
+    function prev(rank) {
+        return rankOrder[rankOrder.indexOf(rank) - 1];
+    }
+
+    function groupType() {
+        var testCards = new CardSet(cards.slice(0));
+
+        // remove all jokers
+        var index = testCards.findCard('Joker', 'Jokers');
+        while (index > -1) {
+            testCards.cards.splice(index, 1);
+            index = testCards.findCard('Joker', 'Jokers');
+        }
+
+        for (var i = 1; i < testCards.cards.length; i++) {
+            if (testCards.cards[i].rank !== testCards.cards[i - 1].rank) {
+                return '';
+            }
+        }
+
+        return cards.length + 'group';
+    }
+
+    function runType() {
+        if (cards.length < 3) {
+            return '';
+        }
+
+        var testCards = new CardSet(cards.slice(0));
+        testCards.sort(rankOrder, suitOrder);
+
+        var index = testCards.findCard('Joker', 'Jokers'),
+            jokerCount = 0;
+
+        while (index > -1) {
+            testCards.cards.splice(index, 1);
+            jokerCount++;
+            index = testCards.findCard('Joker', 'Jokers');
+        }
+
+        var gapCount = 0;
+
+        for (var i = 1; i < testCards.cards.length; i++) {
+            if (testCards.cards[i].suit !== testCards.cards[i - 1].suit) {
+                return '';
+            } else {
+                // calculate difference between ranks
+                // to determine # of jokers needed to fill
+                // gaps
+                gapCount += rankOrder.indexOf(testCards.cards[i].rank) - rankOrder.indexOf(testCards.cards[i - 1].rank) - 1;
+            }
+        }
+
+        // check if there are a sufficient number of jokers
+        // to fill the gaps
+        if (jokerCount >= gapCount) {
+            return cards.length + 'run';
+        }
+
+        return '';
+    }
+
+    // remember, can be a run AND a group if jokers are used
+    var test = runType() || groupType();
+    console.log(test);
+    /*var isValidPairing = true,
+        isValidRun = true;
 
     // first determine if the cards are a valid set
-    if ()
+    for (var i = 1; i < cards.length; i++) {
+        if (isValidPairing && cards[i].rank === cards[i - 1].rank) { // valid pairing
+            isValidRun = false;
+            isValidPairing = true;
+        } else if (isValidRun && prev(cards[i].rank) === cards[i - 1].rank) { // or a valid run
+            isValidPairing = false;
+            isValidRun = true;
+        } else { // not valid at all
+            isValidPairing = false;
+            isValidRun = false;
+        }
+    }
+
+    var isValid = isValidRun || isValidPairing;
+    */
 
     if (this.activeSet.cards.length !== cards.length) {
         return false;
@@ -191,7 +285,7 @@ function DaifugoAI() {
 DaifugoAI.prototype = new DaifugoPlayer;
 
 var game = new Daifugo(3);
-game.deal(0);
+//game.deal(0);
 /*
 var cards = new CardSet();
 cards.generateDeck('standard', 2).shuffle();
