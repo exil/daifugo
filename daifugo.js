@@ -151,6 +151,21 @@ Daifugo.prototype.isValidPlay = function(cards) {
         suitOrder = ['Diamonds', 'Hearts', 'Spades', 'Clubs', 'Jokers'],
         playCards = new CardSet(cards);
 
+    // it is possible that a play can be a valid run and a valid group
+    var runType = runType(),
+        groupType = groupType();
+
+    if (this.activeSet.cards.length !== cards.length) {
+        return false;
+    }
+
+    if (runType || groupType) {
+        
+    }
+
+    return false;
+
+    // move these three functions somewhere eventually...
     function prev(rank) {
         return rankOrder[rankOrder.indexOf(rank) - 1];
     }
@@ -211,33 +226,6 @@ Daifugo.prototype.isValidPlay = function(cards) {
         }
 
         return '';
-    }
-
-    // remember, can be a run AND a group if jokers are used
-    var test = runType() || groupType();
-    console.log(test);
-    /*var isValidPairing = true,
-        isValidRun = true;
-
-    // first determine if the cards are a valid set
-    for (var i = 1; i < cards.length; i++) {
-        if (isValidPairing && cards[i].rank === cards[i - 1].rank) { // valid pairing
-            isValidRun = false;
-            isValidPairing = true;
-        } else if (isValidRun && prev(cards[i].rank) === cards[i - 1].rank) { // or a valid run
-            isValidPairing = false;
-            isValidRun = true;
-        } else { // not valid at all
-            isValidPairing = false;
-            isValidRun = false;
-        }
-    }
-
-    var isValid = isValidRun || isValidPairing;
-    */
-
-    if (this.activeSet.cards.length !== cards.length) {
-        return false;
     }
 }
 
