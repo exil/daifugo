@@ -87,6 +87,12 @@ CardSet.prototype.removeCard = function(rank, suit) {
     return false;
 };
 
+CardSet.prototype.removeCards = function(cards) {
+    for (var i = 0; i < cards.length; i++) {
+        this.removeCard(cards[i].rank, cards[i].suit);
+    }
+}
+
 CardSet.prototype.sort = function(rankOrder, suitOrder) {
     // sort by suit
     this.cards.sort(function(a, b) {
@@ -94,7 +100,7 @@ CardSet.prototype.sort = function(rankOrder, suitOrder) {
             ( (suitOrder.indexOf(b.suit) + 1) * 100 + (rankOrder.indexOf(b.rank) + 1) );
     });
 
-}
+};
 
 // rules could include jokers, 8, 10, etc.
 function Daifugo(numberOfPlayers, rules) {
@@ -112,43 +118,61 @@ function Daifugo(numberOfPlayers, rules) {
     // center cards
     this.activeSet = new CardSet();
     this.activeType = ''; // 1group, 2group, 3group, 4group, 3run, 4run, 5run, etc.
+
+    this.playerRankings = [];
 }
 
 Daifugo.prototype.startGame = function() {    
-    this.deal(deck, 0);
+    this.deal(0);
 
     this.startRound(this.currentPlayer);
 };
 
-Daifugo.prototype.startRound(player) {
-    this.currentPlayer = player.setTurn();
+Daifugo.prototype.startRound = function(player) {
+    this.activeSet = new CardSet();
+    this.activeType = '';
+    this.currentPlayer = player.setTurn(true);
+};
 
-    if (this.currentPlayer) {}
-}
+Daifugo.prototype.endRound = function() {
+    if (this.currentPlayer.hand.length === 0) {
+        this.playerRankings.push(this.currentPlayer);
+    }
 
-Daifugo.prototype.endRound() {
     var nextPlayer = this.getNextPlayer();
 
-    // move handsareempty to getnextplayer
-    if (this.handsAreEmpty()) {
+    console.log(nextPlayer);
+    if (!nextPlayer) {
+        this.playerRankings.push(this.currentPlayer);
         this.endGame();
     } else {
+        this.currentPlayer.setTurn(false);
         this.startRound(nextPlayer);
     }
+};
+
+Daifugo.prototype.endGame = function() {
+    console.log(this.playerRankings);
 }
 
-/*
-    checks if everyone's hand is empty
-*/
-Daifugo.prototype.handsAreEmpty() {
-    for (var i = 0; i < this.players.length; i++) {
-        if (!this.players[i].hand.cards.length) {
-            return false;
+// gets the next available player
+Daifugo.prototype.getNextPlayer = function() {
+    var playerOrder = this.players.slice(0);
+
+    // put the current player at the start of the array
+    [].unshift.apply(playerOrder, playerOrder.splice(this.currentPlayer.name));
+g = playerOrder;
+    // look for the next player
+    for (var i = 1; i < playerOrder.length; i++) {
+        console.log(this.players[i]);
+        if (this.players[i].hand.cards.length) {
+            return this.players[i];
         }
     }
 
-    return true;
-}
+    // everyone else's hand is empty
+    return false;
+};
 
 Daifugo.prototype.deal = function(startingPlayer) {
     var playerCount = this.players.length,
@@ -179,20 +203,25 @@ Daifugo.prototype.deal = function(startingPlayer) {
 Daifugo.prototype.makePlay = function(cards) {
     var rankOrder = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2', 'Joker'],
         suitOrder = ['Diamonds', 'Hearts', 'Spades', 'Clubs', 'Jokers'],
-        playCards = new CardSet(cards);
+        playCards = new CardSet(cards),
+        game = this;
+
+    console.log('making play');
 
     // it is possible that a play can be a valid run and a valid group
     var runType = runType(),
-        groupType = groupType();
+        groupType = groupType(),
+        type = runType || groupType;
 
-    if (this.activeSet.cards.length !== cards.length) {
+    if (this.activeSet.cards.length !== 0 && (this.activeSet.cards.length !== cards.length)) {
         return false;
     }
 
-    if (runType || groupType) {
-        // this is the first time a card is being played
-        if (this.activeSet.cards.length === 0 || trumps(cards, this.activeSet.cards)) {
-            return this.setActive(cards, runType || groupType);
+    if (type) {
+        console.log(runType, groupType)
+        if (this.activeSet.cards.length === 0 || (areSameType(type) && trumps(cards, this.activeSet.cards))) {
+            this.currentPlayer.hand.removeCards(cards);
+            return this.setActive(cards, type);
         }
     }
 
@@ -264,14 +293,18 @@ Daifugo.prototype.makePlay = function(cards) {
     function trumps(cards1, cards2) {
         return rankOrder.indexOf(cards1[cards1.length - 1]) > rankOrder.indexOf(cards1[cards1.length - 1])
     }
+
+    function areSameType(type) {
+        return type === game.activeType;
+    }
 };
 
-Daifugo.prototype.setActive(cards, type) {
+Daifugo.prototype.setActive = function(cards, type) {
     this.activeSet.cards = cards;
     this.activeType = type;
 
     return true;
-}
+};
 
 function DaifugoPlayer(game, name, cards) {
     this.hand = new CardSet(cards);
@@ -287,18 +320,18 @@ DaifugoPlayer.prototype.dealCard = function(card) {
     return this;
 };
 
-DaifugoPlayer.prototype.setTurn = function() {
-    this.isTurn = true;
+DaifugoPlayer.prototype.setTurn = function(isTurn) {
+    this.isTurn = isTurn;
 
     return this;
-}
+};
 
-DaifugoPlayer.prototype.play = function(cards, pass) {
-    var nextPlayer;
+DaifugoPlayer.prototype.play = function(cards, pass) {    
     if (this.isTurn) {
         // verify these cards are in the users hand
         for (var i = 0; i < cards.length; i++) {
             if (this.hand.findCard(cards[i].rank, cards[i].suit) === -1) {
+                console.log('trying to play a card that isn\'t in the hand');
                 return false;
             }
         }
@@ -310,6 +343,7 @@ DaifugoPlayer.prototype.play = function(cards, pass) {
         }
     }
 
+    console.log('invalid play');
     return false;
 }
 
