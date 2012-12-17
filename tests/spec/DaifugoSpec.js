@@ -135,12 +135,6 @@ describe('CardSet', function() {
 describe('Daifugo Game', function() {
     var game;
 
-    beforeEach(function() {
-        player1 = new DaifugoPlayer();
-        player2 = new DaifugoPlayer();
-        player3 = new DaifugoPlayer();
-    });
-
     describe('initialization', function() {
         it('should create 3 players when new object is created', function() {
             game = new Daifugo(3);
@@ -207,6 +201,195 @@ describe('Daifugo Game', function() {
         it('should deal a card if player\'s hand is empty', function() {
 
         });
-    })
+    });
+
+    describe('making a move with no active cards', function() {
+        beforeEach(function() {
+            game = new Daifugo(3);
+            game.activeSet.cards = [];
+            game.activeType = '';
+
+            spyOn(CardSet.prototype, 'removeCards');
+        })
+
+        it('should recognize 1group as valid', function (){
+            var cards = [new Card('5', 'Diamonds')];
+
+            expect(game.makePlay(cards)).toBeTruthy();
+            expect(game.activeType).toBe('1group');
+        });
+
+        it('should recognize 2group as valid', function (){
+            var cards = [new Card('3', 'Diamonds'), new Card('3', 'Hearts')];
+
+            expect(game.makePlay(cards)).toBeTruthy();
+            expect(game.activeType).toBe('2group');
+        });
+
+        it('should recognize 3group as valid', function (){
+            var cards = [new Card('K', 'Diamonds'), new Card('K', 'Hearts'), new Card('K', 'Clubs')];
+
+            expect(game.makePlay(cards)).toBeTruthy();
+            expect(game.activeType).toBe('3group');
+        });
+
+        it('should recognize 4group as valid', function (){
+            var cards = [new Card('10', 'Diamonds'), new Card('10', 'Hearts'), 
+                new Card('10', 'Clubs'), new Card('10', 'Spades')];
+
+            expect(game.makePlay(cards)).toBeTruthy();            
+            expect(game.activeType).toBe('4group');
+        });
+
+        it('should recognize a 4run as valid', function (){
+            var cards = [new Card('Q', 'Diamonds'), new Card('K', 'Diamonds'), 
+                new Card('A', 'Diamonds'), new Card('2', 'Diamonds')];
+
+            expect(game.makePlay(cards)).toBeTruthy();
+            expect(game.activeType).toBe('4run');
+        });
+
+        it('should recognize a 1group joker as a valid card', function (){
+            var cards = [new Card('Joker', 'Jokers')];
+
+            expect(game.makePlay(cards)).toBeTruthy();
+            expect(game.activeType).toBe('1group');
+        });
+
+        it('should recognize a 2group w/ joker as valid', function (){
+            var cards = [new Card('Joker', 'Jokers'), new Card('5', 'Diamonds')];
+
+            expect(game.makePlay(cards)).toBeTruthy();
+            expect(game.activeType).toBe('2group');
+        });
+
+        it('should recognize 3group w/ joker as valid', function (){
+            var cards = [new Card('Joker', 'Jokers'), new Card('7', 'Diamonds'), new Card('7', 'Hearts')];
+
+            expect(game.makePlay(cards)).toBeTruthy();
+            expect(game.activeType).toBe('3group');
+        });
+
+        it('should recognize 4group w/ two jokers as valid', function (){
+            var cards = [new Card('Joker', 'Jokers'), new Card('Joker', 'Jokers'), 
+                new Card('2', 'Spades'), new Card('2', 'Clubs')];
+
+            expect(game.makePlay(cards)).toBeTruthy();
+            expect(game.activeType).toBe('4group');
+        });
+
+        it('should recognize a 5run with two jokers as valid', function (){
+            var cards = [new Card('3', 'Hearts'), new Card('5', 'Hearts'), new Card('Joker', 'Jokers'),
+                new Card('7', 'Hearts'), new Card('Joker', 'Jokers')];
+
+            expect(game.makePlay(cards)).toBeTruthy();
+            expect(game.activeType).toBe('5run');
+        });
+
+        it('should recognize a run with different suits as invalid', function() {
+            var cards = [new Card('3', 'Hearts'), new Card('4', 'Hearts'), new Card('5', 'Diamonds')];
+
+            expect(game.makePlay(cards)).toBeFalsy();
+        });
+
+        it('should recognize two cards of different ranks as invalid', function() {
+            var cards = [new Card('3', 'Hearts'), new Card('9', 'Hearts')];
+
+            expect(game.makePlay(cards)).toBeFalsy();
+        });
+
+        it('should recognize four cards of three same ranks as invalid', function() {
+            var cards = [new Card('3', 'Hearts'), new Card('3', 'Diamonds'), 
+                new Card('3', 'Spades'), new Card('2', 'Clubs')];
+
+            expect(game.makePlay(cards)).toBeFalsy();
+        });
+
+        it('should recognize a sequence of two cards as invalid', function() {
+            var cards = [new Card('3', 'Hearts'), new Card('4', 'Hearts')];
+
+            expect(game.makePlay(cards)).toBeFalsy();
+        });
+    });
+
+    describe('making a move with active cards', function() {
+        it('should recognize 2group "4,4" trumps active 2group "3,3"', function() {
+            game.activeSet.cards = [new Card('3', 'Diamonds'), new Card('3', 'Hearts')];
+            game.activeType = '2group';
+            game.activeHighCard = new Card('3', 'Diamonds');
+
+            var cards = [new Card('4', 'Clubs'), new Card('4', 'Hearts')];
+
+            expect(game.makePlay(cards)).toBeTruthy();
+        });
+
+        it('should recognize 2group "Joker,Joker" trumps 2group "2,2"', function() {
+            game.activeSet.cards = [new Card('2', 'Clubs'), new Card('2', 'Hearts')];
+            game.activeType = '2group';
+            game.activeHighCard = new Card('2', 'Clubs');
+
+            var cards = [new Card('Joker', 'Jokers'), new Card('Joker', 'Jokers')];
+
+            expect(game.makePlay(cards)).toBeTruthy();
+        });
+
+        it('should recognize 2group with same rank as active 2group as invalid', function() {
+            game.activeSet.cards = [new Card('2', 'Clubs'), new Card('2', 'Hearts')];
+            game.activeType = '2group';
+            game.activeHighCard = new Card('2', 'Clubs');
+
+            var cards = [new Card('2', 'Diamonds'), new Card('2', 'Spades')];
+
+            expect(game.makePlay(cards)).toBeFalsy();
+        });
+
+        it('should recognize trumping 4run with active 4run as valid', function() {
+            game.activeSet.cards = [new Card('3', 'Clubs'), new Card('4', 'Clubs'),
+                new Card('5', 'Clubs'), new Card('6', 'Clubs')];
+            game.activeType = '4run';
+            game.activeHighCard = new Card('6', 'Clubs');
+
+            var cards = [new Card('4', 'Diamonds'), new Card('5', 'Diamonds'),
+                new Card('6', 'Diamonds'), new Card('7', 'Diamonds')];
+
+            expect(game.makePlay(cards)).toBeTruthy();
+        });
+
+        //it('should recognize 4run with active 4run w/ joker as '))
+
+        it('should recognize 3group Joker,Joker,K trumps 3group Q,Q,Q', function() {
+
+        });
+
+        it('should recognize 3run Joker,Joker,K trumps 3run Q,K,A', function() {
+
+        });
+
+        it('should recognize 3run Joker,Joker,K does not trump 3run K,A,2', function() {
+
+        });
+
+        it('should recognize 3,4,5,Joker does not trump active 4run Q, K, A, 2', function() {
+            game.activeSet.cards = [new Card('Q', 'Clubs'), new Card('K', 'Clubs'),
+                new Card('A', 'Clubs'), new Card('2', 'Clubs')];
+            game.activeType = '4run';
+            game.activeHighCard = new Card('2', 'Clubs');
+
+            var cards = [new Card('3', 'Diamonds'), new Card('4', 'Diamonds'),
+                new Card('5', 'Diamonds'), new Card('Joker', 'Jokers')];
+
+            expect(game.makePlay(cards)).toBeFalsy();           
+        });
+
+        it('should recognize 5,Joker does not trump active 2,2', function() {
+            game.activeSet.cards = [new Card('2', 'Clubs'), new Card('2', 'Hearts')];
+            game.activeType = '2group';
+            game.activeHighCard = new Card('2', 'Clubs');
+
+            var cards = [new Card('5', 'Diamonds'), new Card('Joker', 'Jokers')];
+
+            expect(game.makePlay(cards)).toBeFalsy();           
+        });
+    });
 
 });

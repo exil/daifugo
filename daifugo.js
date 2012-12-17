@@ -131,6 +131,7 @@ Daifugo.prototype.startGame = function() {
 Daifugo.prototype.startRound = function(player) {
     this.activeSet = new CardSet();
     this.activeType = '';
+    this.activeHighCard = {};
     this.currentPlayer = player.setTurn(true);
 };
 
@@ -161,7 +162,7 @@ Daifugo.prototype.getNextPlayer = function() {
 
     // put the current player at the start of the array
     [].unshift.apply(playerOrder, playerOrder.splice(this.currentPlayer.name));
-g = playerOrder;
+
     // look for the next player
     for (var i = 1; i < playerOrder.length; i++) {
         console.log(this.players[i]);
@@ -211,15 +212,16 @@ Daifugo.prototype.makePlay = function(cards) {
     // it is possible that a play can be a valid run and a valid group
     var runType = runType(),
         groupType = groupType(),
-        type = runType || groupType;
+        type = runType || groupType,
+        highCard;
 
     if (this.activeSet.cards.length !== 0 && (this.activeSet.cards.length !== cards.length)) {
         return false;
     }
 
     if (type) {
-        console.log(runType, groupType)
-        if (this.activeSet.cards.length === 0 || (areSameType(type) && trumps(cards, this.activeSet.cards))) {
+        if (this.activeSet.cards.length === 0 || (areSameType(runType, groupType) && trumps())) {
+            this.activeHighCard = highCard;
             this.currentPlayer.hand.removeCards(cards);
             return this.setActive(cards, type);
         }
@@ -247,6 +249,9 @@ Daifugo.prototype.makePlay = function(cards) {
                 return '';
             }
         }
+
+        // if only playing jokers, set to high card to be a joker
+        highCard = testCards.cards[0] || cards[0];
 
         return cards.length + 'group';
     }
@@ -281,6 +286,12 @@ Daifugo.prototype.makePlay = function(cards) {
             }
         }
 
+        // difference to determine what the high card can be
+        var highExtra = jokerCount - gapCount;
+        // get the index of the highest ranked card excluding jokers, and "append" the extra jokers on the end
+        highIndex = rankOrder.indexOf(testCards.cards[testCards.cards.length - 1].rank) + highExtra;
+        highCard = highIndex > rankOrder.length - 1 ? new Card('Joker', 'Jokers') : new Card(rankOrder[highIndex], testCards.cards[0].suit);
+
         // check if there are a sufficient number of jokers
         // to fill the gaps
         if (jokerCount >= gapCount) {
@@ -290,12 +301,13 @@ Daifugo.prototype.makePlay = function(cards) {
         return '';
     }
 
-    function trumps(cards1, cards2) {
-        return rankOrder.indexOf(cards1[cards1.length - 1]) > rankOrder.indexOf(cards1[cards1.length - 1])
+    function trumps() {
+        console.log(highCard);
+        return rankOrder.indexOf(highCard.rank) > rankOrder.indexOf(game.activeHighCard.rank);
     }
 
-    function areSameType(type) {
-        return type === game.activeType;
+    function areSameType(runType, groupType) {
+        return runType === game.activeType || groupType === game.activeType;
     }
 };
 
