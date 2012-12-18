@@ -14,6 +14,11 @@
 
         <link rel="stylesheet" href="css/normalize.css">
         <link rel="stylesheet" href="css/main.css">
+        <style type="text/css">
+            .player {
+                float: left;
+            }
+        </style>
         <script src="js/vendor/modernizr-2.6.2.min.js"></script>
     </head>
     <body>
@@ -22,10 +27,63 @@
         <![endif]-->
 
         <!-- Add your site or application content here -->
-        <p>Hello world! This is HTML5 Boilerplate.</p>
+        <div id="game">
+            
+        </div>
 
-        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
         <script>window.jQuery || document.write('<script src="js/vendor/jquery-1.8.3.min.js"><\/script>')</script>
+        <script>
+            // an extremely basic and limited pub/sub
+            (function(window) {
+                var topics = [];
+
+                window.notify = function(topic) {
+                    var args = [].slice.call(arguments);
+
+                    args.shift();
+
+                    if (typeof topics[topic] !== "undefined") {
+                        topics[topic].apply(this, args);
+                    }
+                };
+
+                window.listen = function(topic, callback) {
+                    topics[topic] = callback;
+                };
+            })(this);
+        </script>
         <script src="js/daifugo.js"></script>
+        <script>
+        function startGame(data) {
+            console.log(data)
+            var html = '';
+
+            for (var i = 0; i < data.hands.length; i++) {
+                html += '<div id="player-' + i + ' + class="player"><ul>';
+                for (var j = 0; j < data.hands[i].length; j++) {
+                    html+= '<li>' + data.hands[i][j].toString(); + '</li>';
+                }
+                html += '</ul></div>';
+            }
+
+            $('#game').append(html);
+        }
+
+        $(document).ready(function() {
+            // setup
+            var game = new Daifugo(3);
+
+            listen('startGame', startGame);
+
+            //listen('startRound', startRound);
+
+            //listen('madePlay', makePlay);
+
+            game.startGame();
+
+
+        });
+        </script>
     </body>
 </html>

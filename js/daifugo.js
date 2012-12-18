@@ -1,3 +1,8 @@
+/*
+    eventually we'll only want to expose the daifugo
+    object
+*/  
+
 function Card(rank, suit, value) {
     this.rank = rank.toString();
     this.suit = suit || '';
@@ -24,7 +29,7 @@ CardSet.prototype.generateDeck = function(type, jokerCount) {
         }
 
         for (var k = 0; k < jokerCount; k++) {
-            this.cards.push(new Card('Joker', 'Joker'));
+            this.cards.push(new Card('Joker', 'Jokers'));
         }
     }
 
@@ -93,11 +98,16 @@ CardSet.prototype.removeCards = function(cards) {
     }
 }
 
-CardSet.prototype.sort = function(rankOrder, suitOrder) {
-    // sort by suit
+CardSet.prototype.sort = function(sortType) {
+    var rankOrder = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2', 'Joker'],
+        suitOrder = ['Diamonds', 'Hearts', 'Spades', 'Clubs', 'Jokers'];
+
+    suitMultiplier = sortType === 'suit' ? 100 : 1;
+    rankMultiplier = sortType === 'rank' ? 100 : 1;
+
     this.cards.sort(function(a, b) {
-        return ( (suitOrder.indexOf(a.suit) + 1) * 100 + (rankOrder.indexOf(a.rank) + 1) ) - 
-            ( (suitOrder.indexOf(b.suit) + 1) * 100 + (rankOrder.indexOf(b.rank) + 1) );
+        return ( (suitOrder.indexOf(a.suit) + 1) * suitMultiplier + (rankOrder.indexOf(a.rank) + 1) * rankMultiplier ) - 
+            ( (suitOrder.indexOf(b.suit) + 1) * suitMultiplier + (rankOrder.indexOf(b.rank) + 1) * rankMultiplier );
     });
 
 };
@@ -122,27 +132,52 @@ function Daifugo(numberOfPlayers, rules) {
     this.playerRankings = [];
 }
 
-Daifugo.prototype.startGame = function() {    
+Daifugo.prototype.startGame = function() {   
+    var game = this;
+
     this.deal(0);
+
+    this.sortCards();
+
+    notify('startGame', {
+        currentPlayer: game.currentPlayer.name,
+        hands: game.players.map(function(player) {
+            return player.hand.cards;
+        })
+    })
 
     this.startRound(this.currentPlayer);
 };
 
+Daifugo.prototype.sortCards = function() {
+    for (var i = 0; i < this.players.length; i++) {
+        this.players[i].hand.sort('rank');
+    }
+};
+
 Daifugo.prototype.startRound = function(player) {
+    var game = this;
+
     this.activeSet = new CardSet();
     this.activeType = '';
     this.activeHighCard = {};
     this.currentPlayer = player.setTurn(true);
+
+    notify('startRound', {
+        currentPlayer: game.currentPlayer.name,
+        activeSet: ''
+    })
 };
 
 Daifugo.prototype.endRound = function() {
+    var game = this;
+
     if (this.currentPlayer.hand.length === 0) {
         this.playerRankings.push(this.currentPlayer);
     }
 
     var nextPlayer = this.getNextPlayer();
 
-    console.log(nextPlayer);
     if (!nextPlayer) {
         this.playerRankings.push(this.currentPlayer);
         this.endGame();
@@ -154,7 +189,7 @@ Daifugo.prototype.endRound = function() {
 
 Daifugo.prototype.endGame = function() {
     console.log(this.playerRankings);
-}
+};
 
 // gets the next available player
 Daifugo.prototype.getNextPlayer = function() {
@@ -223,6 +258,12 @@ Daifugo.prototype.makePlay = function(cards) {
         if (this.activeSet.cards.length === 0 || (areSameType(runType, groupType) && trumps())) {
             this.activeHighCard = highCard;
             this.currentPlayer.hand.removeCards(cards);
+
+            notify('madePlay', {
+                cardsRemoved: cards,
+                activeSet: game.activeSet.cards
+            });
+
             return this.setActive(cards, type);
         }
     }
@@ -262,7 +303,7 @@ Daifugo.prototype.makePlay = function(cards) {
         }
 
         var testCards = new CardSet(cards.slice(0));
-        testCards.sort(rankOrder, suitOrder);
+        testCards.sort('suit');
 
         var index = testCards.findCard('Joker', 'Jokers'),
             jokerCount = 0;
@@ -357,7 +398,7 @@ DaifugoPlayer.prototype.play = function(cards, pass) {
 
     console.log('invalid play');
     return false;
-}
+};
 
 function DaifugoAI() {
     
@@ -365,7 +406,7 @@ function DaifugoAI() {
 
 DaifugoAI.prototype = new DaifugoPlayer;
 
-var game = new Daifugo(3);
+//var game = new Daifugo(3);
 //game.deal(0);
 /*
 var cards = new CardSet();
