@@ -15,8 +15,72 @@
         <link rel="stylesheet" href="css/normalize.css">
         <link rel="stylesheet" href="css/main.css">
         <style type="text/css">
+            #common {
+                background-color: #3287C5;
+                width: 300px;
+                height: 100px;
+                margin: 10px auto;
+            }
+
+            #players {
+                border-top: 1px dotted #ccc;
+                margin: 0 auto;
+            }
+
             .player {
+                width: 150px;
                 float: left;
+                margin: 10px 0;
+                padding-left: 10px;
+                border-right: 1px dotted #ccc;
+            }
+
+            .player:last-child {
+                border-right: none;
+            }
+
+            .player h3 {
+                text-align: center;
+                margin: 5px 13px 0 0;
+                padding: 0;
+            }
+
+            .cards {
+                margin: 8px 0;
+                padding: 0 10px 0 0;
+            }
+
+            .card {
+                list-style-type: none;
+                margin: 3px;
+            }
+
+            .card-select {
+                background-color: #3287C5;
+                color: #fff;
+                display: block;
+                text-decoration: none;
+                padding: 3px;
+            }
+
+            .active .card-select:hover {
+                background-color: #236FA7;
+            }
+
+            .active {
+                background-color: #F1F1BD;
+            }
+
+            .inactive {
+                opacity: .7;
+            }
+
+            .inactive .card-select {
+                cursor: default;
+            }
+
+            .selected {
+                background-color: black;
             }
         </style>
         <script src="js/vendor/modernizr-2.6.2.min.js"></script>
@@ -28,7 +92,8 @@
 
         <!-- Add your site or application content here -->
         <div id="game">
-            
+            <div id="common"></div>
+            <div id="players"></div>
         </div>
 
         <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
@@ -55,19 +120,50 @@
         </script>
         <script src="js/daifugo.js"></script>
         <script>
+        var currentPlayer = -1;
         function startGame(data) {
-            console.log(data)
             var html = '';
 
+            currentPlayer = data.currentPlayer;
+
             for (var i = 0; i < data.hands.length; i++) {
-                html += '<div id="player-' + i + ' + class="player"><ul>';
-                for (var j = 0; j < data.hands[i].length; j++) {
-                    html+= '<li>' + data.hands[i][j].toString(); + '</li>';
-                }
+                var hand = data.hands[i];
+
+                html += '<div id="player-' + i + '" class="player ' + (currentPlayer === i ? 'active' : 'inactive') + '" data-player="' + i + '"><h3>Player ' + (i + 1) + '</h3>';
+                html += '<a href="#" class="play action-btn">Play</a> <a href="#" class="pass action-btn">Pass</a>'
+                html += '<ul class="cards">';
+                html += drawHand(hand);
                 html += '</ul></div>';
             }
 
-            $('#game').append(html);
+            $('#players').css('width', data.hands.length * 161);
+
+            $('#players').append(html);
+        }
+
+        function updatePlayer(data) {
+            currentPlayer = data.currentPlayer;
+
+            $('.player').removeClass('active').addClass('inactive');
+
+            $('#player-' + currentPlayer).addClass('active').removeClass('inactive');
+        }
+
+        function updateCards(data) {
+            drawHand(data.hand);
+
+            $('#player-' + currentPlayer).find('.cards')
+        }
+
+        function drawHand(hand) {
+            var html = '';
+            for (var j = 0; j < hand.length; j++) {
+                var card = hand[j];
+
+                html+= '<li class="card"><a class="card-select ' + card.suit.toLowerCase() + '" href="" data-rank="' + card.rank + '" data-suit="' + card.suit + '">' + card.toString() + '</a></li>';
+            }
+
+            return html;
         }
 
         $(document).ready(function() {
@@ -76,7 +172,46 @@
 
             listen('startGame', startGame);
 
-            //listen('startRound', startRound);
+            $('#game').on('click', 'a.card-select', function() {
+                if ($(this).parents('.player').hasClass('inactive')) {
+                    return false;
+                }
+
+                $(this).addClass('selected');
+
+                return false;
+            }).on('click', 'a.action-btn', function() {
+                if ($(this).parents('.player').hasClass('inactive')) {
+                    return false;
+                }
+                // get selected cards
+                var $selected,
+                    cards = [],
+                    pass = $(this).hasClass('pass');
+
+                if (!pass) {
+                    // get cards to play
+                    $selected = $(this).parents('.player').find('a.selected');
+
+                    $selected.each(function() {
+                        var data = {
+                           rank: $(this).data('rank').toString(),
+                           suit: $(this).data('suit')
+                        };
+                            
+                        cards.push(data);
+                    });
+                }
+
+                game.initPlay(cards, pass);
+                
+                $selected.removeClass('selected');
+            });
+
+            listen('updatePlayer', updatePlayer);
+
+
+            //listen('updateActiveSet', updateActiveSet);
 
             //listen('madePlay', makePlay);
 
