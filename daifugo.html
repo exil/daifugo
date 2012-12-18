@@ -75,11 +75,15 @@
                 opacity: .7;
             }
 
-            .inactive .card-select {
+            .inactive .card-select, .inactive .action-btn {
                 cursor: default;
             }
 
             .selected {
+                background-color: black;
+            }
+
+            .active .selected:hover {
                 background-color: black;
             }
         </style>
@@ -142,6 +146,7 @@
         }
 
         function updatePlayer(data) {
+            console.log(data.currentPlayer);
             currentPlayer = data.currentPlayer;
 
             $('.player').removeClass('active').addClass('inactive');
@@ -150,9 +155,23 @@
         }
 
         function updateCards(data) {
-            drawHand(data.hand);
+            var html = drawHand(data.hand);
 
-            $('#player-' + currentPlayer).find('.cards')
+            $('#player-' + currentPlayer).find('.cards').html(html);
+        }
+
+        function updateActiveSet(data) {
+            var html = '<ul>';
+
+            for (var i = 0; i < data.activeSet.length; i++) {
+                var card = data.activeSet[i];
+
+                html+= '<li class="card">' + card.toString() + '</li>';
+            }      
+
+            html += '</ul>';
+
+            $('#common').html(html);     
         }
 
         function drawHand(hand) {
@@ -177,43 +196,41 @@
                     return false;
                 }
 
-                $(this).addClass('selected');
+                $(this).toggleClass('selected');
 
                 return false;
+
             }).on('click', 'a.action-btn', function() {
                 if ($(this).parents('.player').hasClass('inactive')) {
                     return false;
                 }
                 // get selected cards
-                var $selected,
+                var $selected = $(this).parents('.player').find('a.selected'), // get cards we can play
                     cards = [],
                     pass = $(this).hasClass('pass');
 
                 if (!pass) {
-                    // get cards to play
-                    $selected = $(this).parents('.player').find('a.selected');
-
                     $selected.each(function() {
-                        var data = {
-                           rank: $(this).data('rank').toString(),
-                           suit: $(this).data('suit')
-                        };
+                        var card = new Card($(this).data('rank').toString(), $(this).data('suit'));
                             
-                        cards.push(data);
+                        cards.push(card);
                     });
                 }
 
-                game.initPlay(cards, pass);
-                
                 $selected.removeClass('selected');
+
+                if (game.initPlay(cards, pass)) {
+                    if (!pass) {
+                        $selected.remove();
+                    }
+                }
+                
+                return false;
             });
 
             listen('updatePlayer', updatePlayer);
 
-
-            //listen('updateActiveSet', updateActiveSet);
-
-            //listen('madePlay', makePlay);
+            listen('updateActiveSet', updateActiveSet);
 
             game.startGame();
 

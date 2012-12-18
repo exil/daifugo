@@ -158,9 +158,7 @@ Daifugo.prototype.sortCards = function() {
 Daifugo.prototype.startRound = function(player) {
     var game = this;
 
-    this.activeSet = new CardSet();
-    this.activeType = '';
-    this.activeHighCard = {};
+    this.setActive([], '', {});
 
     for (var i = 0; i < this.players.length; i++) {
         this.players[i].lastMove = '';
@@ -204,9 +202,8 @@ Daifugo.prototype.getNextPlayer = function() {
 
     // look for the next player
     for (var i = 1; i < playerOrder.length; i++) {
-        console.log(this.players[i]);
-        if (this.players[i].hand.cards.length) {
-            return this.players[i];
+        if (playerOrder[i].hand.cards.length) {
+            return playerOrder[i];
         }
     }
 
@@ -238,7 +235,7 @@ Daifugo.prototype.nextPlay = function() {
 
     // check if the previous players have all passed
     for (var i = 0; i < this.players.length; i++) {
-        if (!this.currentPlayer.name !== i && this.players[i].lastMove === 'play') {
+        if (this.currentPlayer.name !== i && this.players[i].lastMove === 'play') {
             return true;
         }
     }
@@ -271,7 +268,8 @@ Daifugo.prototype.deal = function(startingPlayer) {
     }
 };
 
-Daifugo.prototype.initPlay = function(cards, pass) {    
+Daifugo.prototype.initPlay = function(cards, pass) { 
+
     // verify these cards are in the users hand
     for (var i = 0; i < cards.length; i++) {
         if (this.currentPlayer.hand.findCard(cards[i].rank, cards[i].suit) === -1) {
@@ -282,6 +280,7 @@ Daifugo.prototype.initPlay = function(cards, pass) {
 
     if (this.makePlay(cards) || pass) {
         this.currentPlayer.lastMove = pass ? 'pass' : 'play';
+
         this.nextPlay();
 
         return true;
@@ -315,14 +314,9 @@ Daifugo.prototype.makePlay = function(cards) {
 
     if (type) {
         if (this.activeSet.cards.length === 0 || (areSameType(runType, groupType) && trumps())) {
-            this.activeHighCard = highCard;
             this.currentPlayer.hand.removeCards(cards);
 
-            notify('updateCards', {
-                hand: game.currentPlayer.hand.cards,
-            });
-
-            return this.setActive(cards, type);
+            return this.setActive(cards, type, highCard);
         }
     }
 
@@ -401,7 +395,6 @@ Daifugo.prototype.makePlay = function(cards) {
     }
 
     function trumps() {
-        console.log(highCard);
         return rankOrder.indexOf(highCard.rank) > rankOrder.indexOf(game.activeHighCard.rank);
     }
 
@@ -410,11 +403,12 @@ Daifugo.prototype.makePlay = function(cards) {
     }
 };
 
-Daifugo.prototype.setActive = function(cards, type) {
+Daifugo.prototype.setActive = function(cards, type, highCard) {
     var game = this;
 
     this.activeSet.cards = cards;
     this.activeType = type;
+    this.activeHighCard = highCard;
 
     notify('updateActiveSet', {
         activeSet: game.activeSet.cards
