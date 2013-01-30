@@ -1,0 +1,71 @@
+#common {
+    background-color: #3287C5;
+    width: 300px;
+    height: 100px;
+    margin: 10px auto;
+}
+
+#players {
+    border-top: 1px dotted #ccc;
+    margin: 0 auto;
+}
+
+.player {
+    width: 150px;
+    float: left;
+    margin: 10px 0;
+    padding-left: 10px;
+    border-right: 1px dotted #ccc;
+}
+
+.player:last-child {
+    border-right: none;
+}
+
+.player h3 {
+    text-align: center;
+    margin: 5px 13px 0 0;
+    padding: 0;
+}
+
+.cards {
+    margin: 8px 0;
+    padding: 0 10px 0 0;
+}
+
+.card {
+    list-style-type: none;
+    margin: 3px;
+}
+
+.card-select {
+    background-color: #3287C5;
+    color: #fff;
+    display: block;
+    text-decoration: none;
+    padding: 3px;
+}
+
+.active .card-select:hover {
+    background-color: #236FA7;
+}
+
+.active {
+    background-color: #F1F1BD;
+}
+
+.inactive {
+    opacity: .7;
+}
+
+.inactive .card-select, .inactive .action-btn {
+    cursor: default;
+}
+
+.selected {
+    background-color: black;
+}
+
+.active .selected:hover {
+    background-color: black;
+}
