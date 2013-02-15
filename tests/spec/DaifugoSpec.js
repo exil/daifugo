@@ -34,14 +34,14 @@ describe('CardSet', function() {
     });
 
     it('should create an empty deck of cards if nothing is passed to constructor', function() {
-        expect(cardSet1.cards).toEqual([]);
+        expect(cardSet1.length).toEqual(0);
     });
 
     it('should generate a standard deck of cards', function() {
         var standardDeck = [],
             cardNotFound = false;
 
-        standardDeck = cardSet1.generateDeck('standard', 0).cards;
+        standardDeck = cardSet1.generateDeck('standard', 0);
 
         for (var i = 0; i < standardDeck.length; i++) {
             var card = standardDeck[i].toString();
@@ -57,8 +57,8 @@ describe('CardSet', function() {
 
     it('should find a card in a deck', function() {
         cardSet1.generateDeck('standard', 0);
-        cardSet1.cards[27].rank = '7';
-        cardSet1.cards[27].suit = 'Tests';
+        cardSet1[27].rank = '7';
+        cardSet1[27].suit = 'Tests';
 
         var index = cardSet1.findCard('7', 'Tests');
 
@@ -68,8 +68,8 @@ describe('CardSet', function() {
     it('should remove the top card from a deck if no parameters are specified', function() {
         cardSet1.generateDeck('standard', 0);
 
-        var rank = cardSet1.cards[cardSet1.cards.length - 1].rank,
-            suit = cardSet1.cards[cardSet1.cards.length - 1].suit,
+        var rank = cardSet1[cardSet1.length - 1].rank,
+            suit = cardSet1[cardSet1.length - 1].suit,
             card = cardSet1.removeCard();
 
         expect(card.rank).toBe(rank);
@@ -78,8 +78,8 @@ describe('CardSet', function() {
 
     it('should remove a specified card from a deck', function() {
         cardSet1.generateDeck('standard', 0);
-        cardSet1.cards[27].rank = '7';
-        cardSet1.cards[27].suit = 'Tests';
+        cardSet1[27].rank = '7';
+        cardSet1[27].suit = 'Tests';
 
         var card = cardSet1.removeCard('7', 'Tests');
 
@@ -97,15 +97,15 @@ describe('CardSet', function() {
 
         cardSet1.generateDeck('standard', 0); // tester card set
 
-        cardSet2.cards = cardSet1.cards.slice(0); // original card set
-        var b = cardSet1.cards[0];
+        cardSet2 = new CardSet(cardSet1.slice(0)); // original card set
+        var b = cardSet1[0];
 
         for (var i = 0; i < shuffleTimes; i++) {
             cardSet1.shuffle();
             frequency = 0;
 
-            for (var j = 0; j < cardSet2.cards.length; j++) {
-                cardSet1Index = cardSet1.findCard(cardSet2.cards[j].rank, cardSet2.cards[j].suit);
+            for (var j = 0; j < cardSet2.length; j++) {
+                cardSet1Index = cardSet1.findCard(cardSet2[j].rank, cardSet2[j].suit);
                 if (cardSet1Index === -1) {
                     throw "something went terribly wrong."
                 } else if (cardSet1Index === j) { // cards are in the same position
@@ -115,7 +115,6 @@ describe('CardSet', function() {
 
             results.push(frequency);
         }
-
 
         // get average frequency after shuffling shuffleTimes
         var sum = 0,
@@ -145,7 +144,7 @@ describe('Daifugo Game', function() {
         it('should create a new deck with 2 jokers', function() {
             game = new Daifugo(1);
 
-            expect(game.deck.cards.length).toBe(54);
+            expect(game.deck.length).toBe(54);
         });
     });
 
@@ -158,38 +157,38 @@ describe('Daifugo Game', function() {
             game = new Daifugo(1);
             game.deal(0);
 
-            expect(game.deck.cards.length).toBe(0);
-            expect(game.players[0].hand.cards.length).toBe(54);
+            expect(game.deck.length).toBe(0);
+            expect(game.players[0].hand.length).toBe(54);
         });
 
         it('should deal same number of cards to two players', function() {
             game = new Daifugo(2);
             game.deal(0);
 
-            expect(game.deck.cards.length).toBe(0);
-            expect(game.players[0].hand.cards.length).toBe(27);
-            expect(game.players[1].hand.cards.length).toBe(27);
+            expect(game.deck.length).toBe(0);
+            expect(game.players[0].hand.length).toBe(27);
+            expect(game.players[1].hand.length).toBe(27);
         });
 
         it('should deal same number of cards to three players', function() {
             game = new Daifugo(3);
             game.deal(0);
 
-            expect(game.deck.cards.length).toBe(0);
-            expect(game.players[0].hand.cards.length).toBe(18);
-            expect(game.players[1].hand.cards.length).toBe(18);
-            expect(game.players[2].hand.cards.length).toBe(18);
+            expect(game.deck.length).toBe(0);
+            expect(game.players[0].hand.length).toBe(18);
+            expect(game.players[1].hand.length).toBe(18);
+            expect(game.players[2].hand.length).toBe(18);
         });
 
         it('should deal even as possible number of cards to four players', function() {
             game = new Daifugo(4);
             game.deal(0);
 
-            expect(game.deck.cards.length).toBe(0);
-            expect(game.players[0].hand.cards.length).toBe(14);
-            expect(game.players[1].hand.cards.length).toBe(14);
-            expect(game.players[2].hand.cards.length).toBe(13);
-            expect(game.players[3].hand.cards.length).toBe(13);
+            expect(game.deck.length).toBe(0);
+            expect(game.players[0].hand.length).toBe(14);
+            expect(game.players[1].hand.length).toBe(14);
+            expect(game.players[2].hand.length).toBe(13);
+            expect(game.players[3].hand.length).toBe(13);
         });
     });
 
@@ -206,7 +205,7 @@ describe('Daifugo Game', function() {
     describe('making a move with no active cards', function() {
         beforeEach(function() {
             game = new Daifugo(3);
-            game.activeSet.cards = [];
+            game.activeSet = new CardSet();
             game.activeType = '';
 
             spyOn(CardSet.prototype, 'removeCards');
@@ -314,7 +313,7 @@ describe('Daifugo Game', function() {
 
     describe('making a move with active cards', function() {
         it('should recognize 2group "4,4" trumps active 2group "3,3"', function() {
-            game.activeSet.cards = [new Card('3', 'Diamonds'), new Card('3', 'Hearts')];
+            game.activeSet = new CardSet([new Card('3', 'Diamonds'), new Card('3', 'Hearts')]);
             game.activeType = '2group';
             game.activeHighCard = new Card('3', 'Diamonds');
 
@@ -324,7 +323,7 @@ describe('Daifugo Game', function() {
         });
 
         it('should recognize 2group "Joker,Joker" trumps 2group "2,2"', function() {
-            game.activeSet.cards = [new Card('2', 'Clubs'), new Card('2', 'Hearts')];
+            game.activeSet = new CardSet([new Card('2', 'Clubs'), new Card('2', 'Hearts')]);
             game.activeType = '2group';
             game.activeHighCard = new Card('2', 'Clubs');
 
@@ -334,7 +333,7 @@ describe('Daifugo Game', function() {
         });
 
         it('should recognize 2group with same rank as active 2group as invalid', function() {
-            game.activeSet.cards = [new Card('2', 'Clubs'), new Card('2', 'Hearts')];
+            game.activeSet = new CardSet([new Card('2', 'Clubs'), new Card('2', 'Hearts')]);
             game.activeType = '2group';
             game.activeHighCard = new Card('2', 'Clubs');
 
@@ -344,8 +343,7 @@ describe('Daifugo Game', function() {
         });
 
         it('should recognize trumping 4run with active 4run as valid', function() {
-            game.activeSet.cards = [new Card('3', 'Clubs'), new Card('4', 'Clubs'),
-                new Card('5', 'Clubs'), new Card('6', 'Clubs')];
+            game.activeSet = new CardSet([new Card('3', 'Clubs'), new Card('4', 'Clubs'), new Card('5', 'Clubs'), new Card('6', 'Clubs')]);
             game.activeType = '4run';
             game.activeHighCard = new Card('6', 'Clubs');
 
@@ -370,8 +368,7 @@ describe('Daifugo Game', function() {
         });
 
         it('should recognize 3,4,5,Joker does not trump active 4run Q, K, A, 2', function() {
-            game.activeSet.cards = [new Card('Q', 'Clubs'), new Card('K', 'Clubs'),
-                new Card('A', 'Clubs'), new Card('2', 'Clubs')];
+            game.activeSet = new CardSet([new Card('Q', 'Clubs'), new Card('K', 'Clubs'), new Card('A', 'Clubs'), new Card('2', 'Clubs')]);
             game.activeType = '4run';
             game.activeHighCard = new Card('2', 'Clubs');
 
@@ -382,7 +379,7 @@ describe('Daifugo Game', function() {
         });
 
         it('should recognize 5,Joker does not trump active 2,2', function() {
-            game.activeSet.cards = [new Card('2', 'Clubs'), new Card('2', 'Hearts')];
+            game.activeSet = new CardSet([new Card('2', 'Clubs'), new Card('2', 'Hearts')]);
             game.activeType = '2group';
             game.activeHighCard = new Card('2', 'Clubs');
 

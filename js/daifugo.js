@@ -14,22 +14,37 @@ Card.prototype.toString = function() {
 };
 
 function CardSet(cards) {
-    this.cards = cards || [];
+    this.length = 0;
+
+    if (cards) {
+        for (var i = 0; i < cards.length; i++) {
+            this.push(cards[i]);
+        }
+    }
 }
+
+CardSet.prototype.push = Array.prototype.push;
+CardSet.prototype.sort = Array.prototype.sort;
+CardSet.prototype.splice = Array.prototype.splice;
+CardSet.prototype.pop = Array.prototype.pop;
+CardSet.prototype.slice = Array.prototype.slice;
 
 CardSet.prototype.generateDeck = function(type, jokerCount) {
     var ranks = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'],
         suits = ['Diamonds','Hearts','Spades','Clubs'];
 
+    // clear out current deck
+    this.splice(0, this.length)
+
     if (type === 'standard') {
         for (var i = 0; i < ranks.length; i++) {
             for (var j = 0; j < suits.length; j++) {
-                this.cards.push(new Card(ranks[i], suits[j]));
+                this.push(new Card(ranks[i], suits[j]));
             }
         }
 
         for (var k = 0; k < jokerCount; k++) {
-            this.cards.push(new Card('Joker', 'Jokers'));
+            this.push(new Card('Joker', 'Jokers'));
         }
     }
 
@@ -37,14 +52,14 @@ CardSet.prototype.generateDeck = function(type, jokerCount) {
 };
 
 CardSet.prototype.shuffle = function() {
-    var cardCount = this.cards.length,
+    var cardCount = this.length,
         j, tmpCard;
 
     for (var i = cardCount - 1; i > 0; i--) {
         j = Math.floor(Math.random() * i);
-        tmpCard = this.cards[i];
-        this.cards[i] = this.cards[j];
-        this.cards[j] = tmpCard;
+        tmpCard = this[i];
+        this[i] = this[j];
+        this[j] = tmpCard;
     }
 
     return this;
@@ -53,8 +68,8 @@ CardSet.prototype.shuffle = function() {
 CardSet.prototype.friendlyCardSet = function() {
     var cards = [];
 
-    for (var i = 0; i < this.cards.length; i++) {
-        cards[i] = this.cards[i].toString();
+    for (var i = 0; i < this.length; i++) {
+        cards[i] = this[i].toString();
     }
 
     return cards;
@@ -64,8 +79,8 @@ CardSet.prototype.friendlyCardSet = function() {
     returns index of card
 */
 CardSet.prototype.findCard = function(rank, suit) {
-    for (var i = 0; i < this.cards.length; i++) {
-        if (this.cards[i].rank === rank && this.cards[i].suit === suit) {
+    for (var i = 0; i < this.length; i++) {
+        if (this[i].rank === rank && this[i].suit === suit) {
             return i;
         }
     }
@@ -80,13 +95,13 @@ CardSet.prototype.removeCard = function(rank, suit) {
     var index, card;
 
     if (typeof rank === "undefined") {
-        return this.cards.pop();
+        return this.pop();
     }
 
     index = this.findCard(rank, suit);
 
     if (index > -1) {
-        return this.cards.splice(index, 1)[0];
+        return this.splice(index, 1)[0];
     }
 
     return false;
@@ -98,14 +113,14 @@ CardSet.prototype.removeCards = function(cards) {
     }
 }
 
-CardSet.prototype.sort = function(sortType) {
+CardSet.prototype.sortSet = function(sortType) {
     var rankOrder = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2', 'Joker'],
         suitOrder = ['Diamonds', 'Hearts', 'Spades', 'Clubs', 'Jokers'];
 
     suitMultiplier = sortType === 'suit' ? 100 : 1;
     rankMultiplier = sortType === 'rank' ? 100 : 1;
 
-    this.cards.sort(function(a, b) {
+    this.sort(function(a, b) {
         return ( (suitOrder.indexOf(a.suit) + 1) * suitMultiplier + (rankOrder.indexOf(a.rank) + 1) * rankMultiplier ) - 
             ( (suitOrder.indexOf(b.suit) + 1) * suitMultiplier + (rankOrder.indexOf(b.rank) + 1) * rankMultiplier );
     });
@@ -142,7 +157,7 @@ Daifugo.prototype.startGame = function() {
     notify('startGame', {
         currentPlayer: game.currentPlayer.name,
         hands: game.players.map(function(player) {
-            return player.hand.cards;
+            return player.hand;
         })
     })
 
@@ -151,7 +166,7 @@ Daifugo.prototype.startGame = function() {
 
 Daifugo.prototype.sortCards = function() {
     for (var i = 0; i < this.players.length; i++) {
-        this.players[i].hand.sort('rank');
+        this.players[i].hand.sortSet('rank');
     }
 };
 
@@ -202,7 +217,7 @@ Daifugo.prototype.getNextPlayer = function() {
 
     // look for the next player
     for (var i = 1; i < playerOrder.length; i++) {
-        if (playerOrder[i].hand.cards.length) {
+        if (playerOrder[i].hand.length) {
             return playerOrder[i];
         }
     }
@@ -249,7 +264,7 @@ Daifugo.prototype.nextPlay = function() {
 Daifugo.prototype.deal = function(startingPlayer) {
     var playerCount = this.players.length,
         index = startingPlayer,
-        deckSize = this.deck.cards.length,
+        deckSize = this.deck.length,
         card;
 
     // give card to each player
@@ -308,12 +323,12 @@ Daifugo.prototype.makePlay = function(cards) {
         type = runType || groupType,
         highCard;
 
-    if (this.activeSet.cards.length !== 0 && (this.activeSet.cards.length !== cards.length)) {
+    if (this.activeSet.length !== 0 && (this.activeSet.length !== cards.length)) {
         return false;
     }
 
     if (type) {
-        if (this.activeSet.cards.length === 0 || (areSameType(runType, groupType) && trumps())) {
+        if (this.activeSet.length === 0 || (areSameType(runType, groupType) && trumps())) {
             this.currentPlayer.hand.removeCards(cards);
 
             return this.setActive(cards, type, highCard);
@@ -333,18 +348,18 @@ Daifugo.prototype.makePlay = function(cards) {
         // remove all jokers
         var index = testCards.findCard('Joker', 'Jokers');
         while (index > -1) {
-            testCards.cards.splice(index, 1);
+            testCards.splice(index, 1);
             index = testCards.findCard('Joker', 'Jokers');
         }
 
-        for (var i = 1; i < testCards.cards.length; i++) {
-            if (testCards.cards[i].rank !== testCards.cards[i - 1].rank) {
+        for (var i = 1; i < testCards.length; i++) {
+            if (testCards[i].rank !== testCards[i - 1].rank) {
                 return '';
             }
         }
 
         // if only playing jokers, set to high card to be a joker
-        highCard = testCards.cards[0] || cards[0];
+        highCard = testCards[0] || cards[0];
 
         return cards.length + 'group';
     }
@@ -355,35 +370,35 @@ Daifugo.prototype.makePlay = function(cards) {
         }
 
         var testCards = new CardSet(cards.slice(0));
-        testCards.sort('suit');
+        testCards.sortSet('suit');
 
         var index = testCards.findCard('Joker', 'Jokers'),
             jokerCount = 0;
 
         while (index > -1) {
-            testCards.cards.splice(index, 1);
+            testCards.splice(index, 1);
             jokerCount++;
             index = testCards.findCard('Joker', 'Jokers');
         }
 
         var gapCount = 0;
 
-        for (var i = 1; i < testCards.cards.length; i++) {
-            if (testCards.cards[i].suit !== testCards.cards[i - 1].suit) {
+        for (var i = 1; i < testCards.length; i++) {
+            if (testCards[i].suit !== testCards[i - 1].suit) {
                 return '';
             } else {
                 // calculate difference between ranks
                 // to determine # of jokers needed to fill
                 // gaps
-                gapCount += rankOrder.indexOf(testCards.cards[i].rank) - rankOrder.indexOf(testCards.cards[i - 1].rank) - 1;
+                gapCount += rankOrder.indexOf(testCards[i].rank) - rankOrder.indexOf(testCards[i - 1].rank) - 1;
             }
         }
 
         // difference to determine what the high card can be
         var highExtra = jokerCount - gapCount;
         // get the index of the highest ranked card excluding jokers, and "append" the extra jokers on the end
-        highIndex = rankOrder.indexOf(testCards.cards[testCards.cards.length - 1].rank) + highExtra;
-        highCard = highIndex > rankOrder.length - 1 ? new Card('Joker', 'Jokers') : new Card(rankOrder[highIndex], testCards.cards[0].suit);
+        highIndex = rankOrder.indexOf(testCards[testCards.length - 1].rank) + highExtra;
+        highCard = highIndex > rankOrder.length - 1 ? new Card('Joker', 'Jokers') : new Card(rankOrder[highIndex], testCards[0].suit);
 
         // check if there are a sufficient number of jokers
         // to fill the gaps
@@ -406,12 +421,12 @@ Daifugo.prototype.makePlay = function(cards) {
 Daifugo.prototype.setActive = function(cards, type, highCard) {
     var game = this;
 
-    this.activeSet.cards = cards;
+    this.activeSet = new CardSet(cards);
     this.activeType = type;
     this.activeHighCard = highCard;
 
     notify('updateActiveSet', {
-        activeSet: game.activeSet.cards
+        activeSet: game.activeSet
     })
 
     return true;
@@ -427,7 +442,7 @@ function DaifugoPlayer(game, name, cards) {
 }
 
 DaifugoPlayer.prototype.dealCard = function(card) {
-    this.hand.cards.push(card);
+    this.hand.push(card);
 
     return this;
 };
