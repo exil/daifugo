@@ -30,7 +30,7 @@ CardSet.prototype.pop = Array.prototype.pop;
 CardSet.prototype.slice = Array.prototype.slice;
 
 CardSet.prototype.generateDeck = function(type, jokerCount) {
-    var ranks = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'],
+    var ranks = ['3','4'],//['2','3','4','5','6','7','8','9','10','J','Q','K','A'],
         suits = ['Diamonds','Hearts','Spades','Clubs'];
 
     // clear out current deck
@@ -144,8 +144,24 @@ function Daifugo(numberOfPlayers, rules) {
     this.activeSet = new CardSet();
     this.activeType = ''; // 1group, 2group, 3group, 4group, 3run, 4run, 5run, etc.
 
+    this.remainingPlayers = numberOfPlayers;
+
     this.playerRankings = [];
 }
+
+/*
+    This starts the game and should only be called once per game.
+
+    Each game consists of multiple rounds.
+
+    Each round consists of multiple plays.
+
+    In each round, players take turns making plays. The round ends
+    once no one can make any more plays.
+
+    In each play, a player picks cards from his or her deck and
+    puts them down, or passes.
+*/
 
 Daifugo.prototype.startGame = function() {   
     var game = this;
@@ -184,21 +200,9 @@ Daifugo.prototype.endRound = function(gameOver) {
     var game = this,
         nextPlayer = this.getNextPlayer();
 
-    if (this.currentPlayer.hand.length === 0 || gameOver) {
-        this.playerRankings.push(this.currentPlayer);
-
-        if (!gameOver) {
-            this.endGame();
-        } else {
-            this.currentPlayer.setTurn(false);
-            this.currentPlayer = nextPlayer.setTurn(true);
-
-            notify('updatePlayer', {
-                currentPlayer: game.currentPlayer.name
-            });
-
-            this.startRound(nextPlayer);
-        }
+    //if player just finished their hand or the game is over
+    if (gameOver) {
+        this.endGame();
     } else {
         this.startRound(this.currentPlayer);
     }
@@ -227,18 +231,19 @@ Daifugo.prototype.getNextPlayer = function() {
 };
 
 /*
-    game > round > play
+    Game
+    ---Round
+    ------Play
     a play is within a round
 */
-Daifugo.prototype.nextPlay = function() {
+Daifugo.prototype.endPlay = function() {
     var game = this,
-        nextPlayer = this.getNextPlayer();
+        nextPlayer = this.getNextPlayer(),
+        previousPlayer = this.currentPlayer;
 
-    // end the round because no more players exist
-    if (!nextPlayer) {
-        this.endRound(true);
-
-        return false;
+    // check if the player just finished their hand
+    if (!previousPlayer.hand.length) {
+        previousPlayer.setFinished();
     }
 
     this.currentPlayer.setTurn(false);
@@ -248,9 +253,22 @@ Daifugo.prototype.nextPlay = function() {
         currentPlayer: game.currentPlayer.name
     });
 
-    // check if the previous players have all passed
+    // game is over
+    if (this.remainingPlayers <= 1) {
+        this.currentPlayer.setFinished();
+        this.endRound(true);
+
+        return true;
+    }
+
+    // player just finished, so don't end the round and continue playing
+    if (!previousPlayer.hand.length) {
+        return true;
+    }
+
+    // check if the previous players have all played something
     for (var i = 0; i < this.players.length; i++) {
-        if (this.currentPlayer.name !== i && this.players[i].lastMove === 'play') {
+        if (this.currentPlayer.name !== i && this.players[i].lastMove === 'play' && !this.players[i].isFinished) {
             return true;
         }
     }
@@ -296,7 +314,7 @@ Daifugo.prototype.initPlay = function(cards, pass) {
     if (this.makePlay(cards) || pass) {
         this.currentPlayer.lastMove = pass ? 'pass' : 'play';
 
-        this.nextPlay();
+        this.endPlay();
 
         return true;
     }
@@ -439,6 +457,7 @@ function DaifugoPlayer(game, name, cards) {
     this.isTurn = false;
     this.game = game;
     this.lastMove = ''; //play or pass
+    this.isFinished = false;
 }
 
 DaifugoPlayer.prototype.dealCard = function(card) {
@@ -455,18 +474,17 @@ DaifugoPlayer.prototype.setTurn = function(isTurn) {
     return this;
 };
 
+DaifugoPlayer.prototype.setFinished = function() {
+    var game = this.game;
 
+    this.isFinished = true;
+
+    game.playerRankings.push(this);
+    game.remainingPlayers--;
+};
 
 function DaifugoAI() {
     
 }
 
 DaifugoAI.prototype = new DaifugoPlayer;
-
-//var game = new Daifugo(3);
-//game.deal(0);
-/*
-var cards = new CardSet();
-cards.generateDeck('standard', 2).shuffle();
-var friendly = cards.friendlyCardSet();
-*/
