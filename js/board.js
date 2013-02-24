@@ -29,12 +29,6 @@
         $('#player-' + currentPlayer).addClass('active').removeClass('inactive');
     }
 
-    function updateCards(data) {
-        var html = drawHand(data.hand);
-
-        $('#player-' + currentPlayer).find('.cards').html(html);
-    }
-
     function updateActiveSet(data) {
         var html = '<ul>';
 

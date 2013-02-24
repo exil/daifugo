@@ -30,7 +30,7 @@ CardSet.prototype.pop = Array.prototype.pop;
 CardSet.prototype.slice = Array.prototype.slice;
 
 CardSet.prototype.generateDeck = function(type, jokerCount) {
-    var ranks = ['3','4'],//['2','3','4','5','6','7','8','9','10','J','Q','K','A'],
+    var ranks = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'],
         suits = ['Diamonds','Hearts','Spades','Clubs'];
 
     // clear out current deck
@@ -128,11 +128,15 @@ CardSet.prototype.sortSet = function(sortType) {
 };
 
 // rules could include jokers, 8, 10, etc.
-function Daifugo(numberOfPlayers, rules) {
+function Daifugo(numberOfPlayers, isSinglePlayer, rules) {
     this.players = [];
 
-    for (var i = 0; i < numberOfPlayers; i++) {
-        this.players.push(new DaifugoPlayer(this, i));
+    this.players.push(new DaifugoPlayer(this, 0));
+
+    var Opponent = isSinglePlayer ? DaifugoAI : DaifugoPlayer;
+
+    for (var i = 1; i < numberOfPlayers; i++) {
+        this.players.push(new Opponent(this, i));
     }
 
     this.currentPlayer = this.players[0].setTurn();
