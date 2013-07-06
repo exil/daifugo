@@ -3,7 +3,7 @@ This is a JavaScript version of the Japanese card game, [Daifugo](http://en.wiki
 
 This is in no way complete. Although this is a multiplayer game, the current version only supports playing against yourself.
 
-[Demo](http://www.maxpappas.com/sekrr/daifuo)
+[Demo](http://www.maxpappas.com/sekrr/daifugo/daifugo.html)
 
 To be added in the future:
 * Special Rules
